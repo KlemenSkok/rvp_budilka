@@ -9,7 +9,7 @@ const int clockPin = 11;    //74HC595 Pin 11
 const int latchPin = 12;    //74HC595 Pin 12
 const int dataPin = 13;     //74HC595 Pin 14
 
-const byte digit[11] =      //seven segment digits in bits
+const byte digit[12] =      //seven segment digits in bits
 {
     B01111110, //0
     B00001100, //1
@@ -21,7 +21,8 @@ const byte digit[11] =      //seven segment digits in bits
     B00001110, //7
     B11111110, //8
     B11011110, //9
-	B11000110  // znak za stopinje
+	B11000110, // znak za stopinje
+	B00000000  // prazno
 };
 int digitBuffer[4] = {0};
 int digitScan=0;
@@ -169,8 +170,7 @@ void loop() {
 	// prikaz temperature
 	start_t = end_t = millis();
 	while(end_t - start_t <= 4000) {
-		float temp = dht.readTemperature();
-		int temp_int = (int)(temp * 10);
+		int temp_int = (int)(dht.readTemperature() * 10);
 
 		digitBuffer[0] = temp_int / 100;
 		digitBuffer[1] = (temp_int / 10) % 10;
@@ -180,6 +180,21 @@ void loop() {
 		updateDisp(true);
 
 		check_gb();
+	}
+
+	// prikaz vlage
+	start_t = end_t = millis();
+	while(end_t - start_t <= 4000) {
+		int vlaga_int = (int)dht.readHumidity();
+
+		digitBuffer[0] = 11; // prazno
+		digitBuffer[1] = (vlaga_int / 100 > 0) ? vlaga_int / 100 : 11;
+		digitBuffer[2] = (vlaga_int / 10) % 10;
+		digitBuffer[3] = vlaga_int % 10;
+        end_t = millis();
+        updateDisp(false);
+
+        check_gb();
 	}
 
 
