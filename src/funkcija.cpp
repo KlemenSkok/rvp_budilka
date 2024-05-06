@@ -1,4 +1,4 @@
-
+/* 
 
 //writes the temperature on display
 void updateDisp(){
@@ -23,4 +23,4 @@ void updateDisp(){
   digitalWrite(latchPin, HIGH);
   digitScan++;
   if(digitScan>3) digitScan=0; 
-}
+} */
