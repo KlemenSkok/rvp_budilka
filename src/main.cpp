@@ -29,15 +29,13 @@ int digitScan=0;
 
 virtuabotixRTC *RTC = new virtuabotixRTC(6, 7, 8);
 
-const int gb = 2; // od budilke (treba prestavt)
+const int gb = 2; // od budilke
 const int g1 = 3;
 const int g2 = 4;
 const int g3 = 5;
 const int g4 = 9;
 
 const int budilka_led = A0;
-
-const int led_pin = 14;
 
 int dht_pin = 10;
  
