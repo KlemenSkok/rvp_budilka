@@ -1,3 +1,14 @@
+
+/**
+ * 
+ * program za budilko pr rvp
+ * 
+ * uporabla funkcijo updateDisp() za mojo ploscico
+ * ! ČE KOPIRAS KODO ZAKOMENTIRI MOJO FUNKCIJO IN UPORAB UNO OD KRISLJA 
+ *
+*/
+
+
 #include <Arduino.h>
 #include <virtuabotixRTC.h>
 #include <DHT.h>
@@ -96,7 +107,7 @@ void nastavi_budilko();
 
 
 struct CasBudilke {
-    short ura, minuta;
+    uint8_t ura, minuta;
 };
 
 long start_t, end_t;
@@ -440,7 +451,7 @@ void edit_leto() {
 
 }
 
-
+// DEFAULT FUNKCIJA
 /* //writes the temperature on display
 void updateDisp(bool dp){ // ----------------------
     for(byte j=0; j<4; j++)  
@@ -465,7 +476,7 @@ void updateDisp(bool dp){ // ----------------------
     if(digitScan>3) digitScan=0;
 } */
 
-// skuhu funkcijo da dela za moj cip
+// skuhu funkcijo da dela za moj cip. ce kopiras uporab uno zgori
 //writes the temperature on display
 void updateDisp(bool dp){
   for(byte j=0; j<4; j++)  
