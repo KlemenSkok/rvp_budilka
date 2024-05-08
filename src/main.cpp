@@ -4,7 +4,9 @@
  * program za budilko pr rvp
  * 
  * uporabla funkcijo updateDisp() za mojo ploscico
- * ! ČE KOPIRAS KODO ZAKOMENTIRI MOJO FUNKCIJO IN UPORAB UNO OD KRISLJA 
+ * ! ČE KOPIRAS KODO ZAKOMENTIRI MOJO FUNKCIJO IN UPORAB UNO OD KRISLJA
+ * 
+ * Ta koda je na githubu: https://github.com/KlemenSkok/rvp_budilka.git
  *
 */
 
@@ -14,7 +16,7 @@
 #include <DHT.h>
 #include <EEPROM.h>
 
-const int digitPins[4] = {B11101111,B11010000,B10111111,B01111111};              
+const int digitPins[4] = {B11101111,B11010000,B10111111,B01111111};
 
 const int clockPin = 11;    //74HC595 Pin 11
 const int latchPin = 12;    //74HC595 Pin 12
@@ -45,20 +47,15 @@ const int g1 = 3;
 const int g2 = 4;
 const int g3 = 5;
 const int g4 = 9;
-
 const int budilka_led = A0;
 
 int dht_pin = 10;
- 
-//DHT dht(,,);
 DHT dht(dht_pin, DHT11);
 
-void updateDisp();
-
-void budilka_int();
+void updateDisp(bool);
 
 void setup(){
-    for(int i=0;i<4;i++) {
+    for(int i = 0; i < 4; i++) {
         pinMode(digitPins[i],OUTPUT);
     }
     pinMode(latchPin, OUTPUT);
@@ -77,8 +74,7 @@ void setup(){
     // seconds, minutes, hours, day of the week, day of the month, month, year
     //RTC.setDS1302Time(00, 41, 11, 1, 26, 2, 2024);
     dht.begin();
-    //            pin 2
-    //attachInterrupt(digitalPinToInterrupt(2), budilka_int, CHANGE);
+
 }
 
 //previous button states
