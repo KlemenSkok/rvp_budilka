@@ -1,23 +1,42 @@
 
 /**
- * 
- * program za budilko pr rvp
+ * @file main.cpp
+ * @brief program za budilko pr rvp
  * 
  * uporabla funkcijo updateDisp() za mojo ploscico
  * ! ČE KOPIRAS KODO ZAKOMENTIRI MOJO FUNKCIJO IN UPORAB UNO OD KRISLJA
  * 
  * Ta koda je na githubu: https://github.com/KlemenSkok/rvp_budilka.git
  *
+ * 
+ * ? PINI:
+ * 2 - gumb za budilko
+ * 3 - gumb 1 (leva stran displaya)
+ * 4 - gumb 2 (desna stran displaya)
+ * 5 - gumb 3 (+)
+ * 6 - RTC CLK
+ * 7 - RTC DAT
+ * 8 - RTC RST
+ * 9 - gumb 4 (-)
+ * 10 - DHT11 data
+ * 11 - clockPin
+ * 12 - latchPin
+ * 13 - dataPin
+ * A0 - led za budilko
+ * 
+ * 
+ * 
 */
 
 
 #include <Arduino.h>
 #include <virtuabotixRTC.h>
+#include <Adafruit_Sensor.h>
 #include <DHT.h>
 #include <EEPROM.h>
 
 
-//! ista frka, zakomentirana tabela je originalna
+//! isti shit, zakomentirana tabela je originalna
 //const int digitPins[4] = {B11101111,B11010000,B10111111,B01111111};
 const int digitPins[4] = {B01111111, B10111111, B11010000, B11101111};
 
@@ -119,10 +138,10 @@ void loop() {
     while(end_t - start_t <= 4000){ // čas
         RTC->updateTime();
 
-        if(digitalRead(g1) == HIGH) {
+        if(digitalRead(g1) == LOW) {
             edit_ure();
         }
-        if(digitalRead(g2) == HIGH) {
+        if(digitalRead(g2) == LOW) {
             edit_minute();
         }
 
@@ -140,10 +159,10 @@ void loop() {
     while(end_t - start_t <= 4000){ // datum
         RTC->updateTime();
 
-        if(digitalRead(g1) == HIGH) { // edit dan
+        if(digitalRead(g1) == LOW) { // edit dan
             edit_dan();
         }
-        else if(g2 == HIGH) { // edit mesec
+        else if(digitalRead(g2) == LOW) { // edit mesec
             edit_mesec();
         }
 
@@ -161,7 +180,7 @@ void loop() {
     while(end_t - start_t <= 4000) { // leto
         RTC->updateTime();
 
-        if(digitalRead(g1) == HIGH) { // edit leto
+        if(digitalRead(g1) == LOW) { // edit leto
             edit_leto();
         }
 
@@ -175,10 +194,12 @@ void loop() {
         check_gb();
     }
 
+    int temp_int = (int)(dht.readTemperature() * 10);
 	// prikaz temperature
 	start_t = end_t = millis();
 	while(end_t - start_t <= 4000) {
-		int temp_int = (int)(dht.readTemperature() * 10);
+        if(end_t % 1000 == 0)
+            temp_int = int(dht.readTemperature() * 10); // preberi temperaturo vsako sekundo
 
 		digitBuffer[0] = temp_int / 100;
 		digitBuffer[1] = (temp_int / 10) % 10;
@@ -190,10 +211,12 @@ void loop() {
 		check_gb();
 	}
 
+    int vlaga_int = (int)dht.readHumidity();
 	// prikaz vlage
 	start_t = end_t = millis();
 	while(end_t - start_t <= 4000) {
-		int vlaga_int = (int)dht.readHumidity();
+		if(end_t % 1000 == 0)
+            vlaga_int = int(dht.readHumidity());
 
 		digitBuffer[0] = 11; // prazno
 		digitBuffer[1] = (vlaga_int / 100 > 0) ? vlaga_int / 100 : 11;
@@ -205,23 +228,22 @@ void loop() {
         check_gb();
 	}
 
-
 }
 
 
 void check_gb() {
 
     bool gb_curr = digitalRead(gb);
-    if(gb_curr == HIGH) {
-        if(gb_prev == LOW) {
+    if(gb_curr == LOW) {
+        if(gb_prev == HIGH) {
             gb_last_pressed = millis();
         }
-        else if(gb_prev == HIGH && millis() - gb_last_pressed >= 1500) { // ce drzis tipko za vec kot 1,5s, jo nastavis
+        else if(gb_prev == LOW && millis() - gb_last_pressed >= 1500) { // ce drzis tipko za vec kot 1,5s, jo nastavis
             nastavi_budilko();
         }
     }
     else {
-        if(gb_prev == HIGH && millis() - gb_last_pressed >= 30) { // toggle budilka
+        if(gb_prev == LOW && millis() - gb_last_pressed >= 30) { // toggle budilka
             vklopi_budilko = !vklopi_budilko;
             digitalWrite(budilka_led, vklopi_budilko);
         }
@@ -232,26 +254,26 @@ void check_gb() {
 void nastavi_budilko() {
 
     // pocakamo, da uporabnik spusti gumb, da program ne gre takoj ven
-    while(digitalRead(gb) == HIGH);
+    while(digitalRead(gb) == LOW);
  
     // preberi z zacetka eeproma
     struct CasBudilke cajt;
     EEPROM.get(0, cajt);
 
 
-    while(digitalRead(gb) == LOW) {
-        while(digitalRead(g1) == HIGH) { // edit ure
-            if(digitalRead(g3) == HIGH && g3_prev == LOW && millis() - g3_last_pressed >= 30) {
+    while(digitalRead(gb) == HIGH) {
+        while(digitalRead(g1) == LOW) { // edit ure
+            if(digitalRead(g3) == LOW && g3_prev == HIGH && millis() - g3_last_pressed >= 30) {
                 cajt.ura++;
-                g3_prev = HIGH;
+                g3_prev = LOW;
                 g3_last_pressed = millis();
             }
-            if(digitalRead(g4) == HIGH && g4_prev == LOW && millis() - g4_last_pressed >= 30) {
+            if(digitalRead(g4) == LOW && g4_prev == HIGH && millis() - g4_last_pressed >= 30) {
                 cajt.ura--;
-                g4_prev = HIGH;
+                g4_prev = LOW;
                 g4_last_pressed = millis();
             }
-            g1_prev = HIGH;
+            g1_prev = LOW;
             g3_prev = digitalRead(g3);
             g4_prev = digitalRead(g4);
 
@@ -261,20 +283,20 @@ void nastavi_budilko() {
             digitBuffer[3] = cajt.minuta % 10;
             updateDisp(true);
         }
-        g1_prev = HIGH;
+        g1_prev = LOW;
 
-        while(digitalRead(g2) == HIGH) { // edit minute
-            if(digitalRead(g3) == HIGH && g3_prev == LOW && millis() - g3_last_pressed >= 30) {
+        while(digitalRead(g2) == LOW) { // edit minute
+            if(digitalRead(g3) == LOW && g3_prev == HIGH && millis() - g3_last_pressed >= 30) {
                 cajt.minuta++;
-                g3_prev = HIGH;
+                g3_prev = LOW;
                 g3_last_pressed = millis();
             }
-            if(digitalRead(g4) == HIGH && g4_prev == LOW && millis() - g4_last_pressed >= 30) {
+            if(digitalRead(g4) == LOW && g4_prev == HIGH && millis() - g4_last_pressed >= 30) {
                 cajt.minuta--;
-                g4_prev = HIGH;
+                g4_prev = LOW;
                 g4_last_pressed = millis();
             }
-            g2_prev = HIGH;
+            g2_prev = LOW;
             g3_prev = digitalRead(g3);
             g4_prev = digitalRead(g4);
 
@@ -284,11 +306,11 @@ void nastavi_budilko() {
             digitBuffer[3] = cajt.minuta % 10;
             updateDisp(true);
         }
-        g2_prev = HIGH;
+        g2_prev = LOW;
 
     }
 
-    gb_prev = HIGH;
+    gb_prev = LOW;
     // zapisi novi cas v eeprom
     EEPROM.put(0, cajt);
 
@@ -298,18 +320,22 @@ void nastavi_budilko() {
 void edit_ure() {
 
     int ure = RTC->hours;
-    while(digitalRead(g1) == HIGH) { // edit ure
-        if(digitalRead(g3) == HIGH && g3_prev == LOW && millis() - g3_last_pressed >= 30) {
+    while(digitalRead(g1) == LOW) { // edit ure
+        if(digitalRead(g3) == LOW && g3_prev == HIGH && millis() - g3_last_pressed >= 30) {
             ure++;
-            g3_prev = HIGH;
+            if(ure >= 24)
+                ure = 0;
+            g3_prev = LOW;
             g3_last_pressed = millis();
         }
-        if(digitalRead(g4) == HIGH && g4_prev == LOW && millis() - g4_last_pressed >= 30) {
+        if(digitalRead(g4) == LOW && g4_prev == HIGH && millis() - g4_last_pressed >= 30) {
             ure--;
-            g4_prev = HIGH;
+            if(ure < 0)
+                ure = 23;
+            g4_prev = LOW;
             g4_last_pressed = millis();
         }
-        g1_prev = HIGH;
+        g1_prev = LOW;
         g3_prev = digitalRead(g3);
         g4_prev = digitalRead(g4);
 
@@ -322,25 +348,29 @@ void edit_ure() {
     // save changes
     RTC->setDS1302Time(RTC->seconds, RTC->minutes, ure, RTC->dayofweek, RTC->dayofmonth, RTC->month, RTC->year);
     start_t = end_t = millis();
-    g1_prev = LOW;
+    g1_prev = HIGH;
 
 }
 
 void edit_minute() {
 
     int minute = RTC->minutes;
-    while(digitalRead(g2) == HIGH) { // edit minute
-        if(digitalRead(g3) == HIGH && g3_prev == LOW && millis() - g3_last_pressed >= 30) {
+    while(digitalRead(g2) == LOW) { // edit minute
+        if(digitalRead(g3) == LOW && g3_prev == HIGH && millis() - g3_last_pressed >= 30) {
             minute++;
-            g3_prev = HIGH;
+            if(minute >= 60)
+                minute = 0;
+            g3_prev = LOW;
             g3_last_pressed = millis();
         }
-        if(digitalRead(g4) == HIGH && g4_prev == LOW && millis() - g4_last_pressed >= 30) {
+        if(digitalRead(g4) == LOW && g4_prev == HIGH && millis() - g4_last_pressed >= 30) {
             minute--;
-            g4_prev = HIGH;
+            if(minute < 0)
+                minute = 59;
+            g4_prev = LOW;
             g4_last_pressed = millis();
         }
-        g2_prev = HIGH;
+        g2_prev = LOW;
         g3_prev = digitalRead(g3);
         g4_prev = digitalRead(g4);
 
@@ -353,25 +383,29 @@ void edit_minute() {
     // save changes
     RTC->setDS1302Time(RTC->seconds, minute, RTC->hours, RTC->dayofweek, RTC->dayofmonth, RTC->month, RTC->year);
     start_t = end_t = millis();
-    g2_prev = LOW;
+    g2_prev = HIGH;
 
 }
 
 void edit_dan() {
 
     int dan = RTC->dayofmonth;
-    while(digitalRead(g1) == HIGH) { // edit dan
-        if(digitalRead(g3) == HIGH && g3_prev == LOW && millis() - g3_last_pressed >= 30) {
+    while(digitalRead(g1) == LOW) { // edit dan
+        if(digitalRead(g3) == LOW && g3_prev == HIGH && millis() - g3_last_pressed >= 30) {
             dan++;
-            g3_prev = HIGH;
+            if(dan > 31)
+                dan = 1;
+            g3_prev = LOW;
             g3_last_pressed = millis();
         }
-        if(digitalRead(g4) == HIGH && g4_prev == LOW && millis() - g4_last_pressed >= 30) {
+        if(digitalRead(g4) == LOW && g4_prev == HIGH && millis() - g4_last_pressed >= 30) {
             dan--;
-            g4_prev = HIGH;
+            if(dan < 1)
+                dan = 31;
+            g4_prev = LOW;
             g4_last_pressed = millis();
         }
-        g1_prev = HIGH;
+        g1_prev = LOW;
         g3_prev = digitalRead(g3);
         g4_prev = digitalRead(g4);
 
@@ -384,25 +418,29 @@ void edit_dan() {
     // save changes
     RTC->setDS1302Time(RTC->seconds, RTC->minutes, RTC->hours, RTC->dayofweek, dan, RTC->month, RTC->year);
     start_t = end_t = millis();
-    g1_prev = LOW;
+    g1_prev = HIGH;
 
 }
 
 void edit_mesec() {
 
     int mesec = RTC->month;
-    while(digitalRead(g2) == HIGH) { // edit mesec
-        if(digitalRead(g3) == HIGH && g3_prev == LOW && millis() - g3_last_pressed >= 30) {
+    while(digitalRead(g2) == LOW) { // edit mesec
+        if(digitalRead(g3) == LOW && g3_prev == HIGH && millis() - g3_last_pressed >= 30) {
             mesec++;
-            g3_prev = HIGH;
+            if(mesec > 12)
+                mesec = 1;
+            g3_prev = LOW;
             g3_last_pressed = millis();
         }
-        if(digitalRead(g4) == HIGH && g4_prev == LOW && millis() - g4_last_pressed >= 30) {
+        if(digitalRead(g4) == LOW && g4_prev == HIGH && millis() - g4_last_pressed >= 30) {
             mesec--;
-            g4_prev = HIGH;
+            if(mesec < 1)
+                mesec = 12;
+            g4_prev = LOW;
             g4_last_pressed = millis();
         }
-        g2_prev = HIGH;
+        g2_prev = LOW;
         g3_prev = digitalRead(g3);
         g4_prev = digitalRead(g4);
 
@@ -415,25 +453,27 @@ void edit_mesec() {
     // save changes
     RTC->setDS1302Time(RTC->seconds, RTC->minutes, RTC->hours, RTC->dayofweek, RTC->dayofmonth, mesec, RTC->year);
     start_t = end_t = millis();
-    g2_prev = LOW;
+    g2_prev = HIGH;
 
 }
 
 void edit_leto() {
 
     int leto = RTC->year;
-    while(digitalRead(g1) == HIGH) { // edit leto
-        if(digitalRead(g3) == HIGH && g3_prev == LOW && millis() - g3_last_pressed >= 30) {
+    while(digitalRead(g1) == LOW) { // edit leto
+        if(digitalRead(g3) == LOW && g3_prev == HIGH && millis() - g3_last_pressed >= 30) {
             leto++;
-            g3_prev = HIGH;
+            g3_prev = LOW;
             g3_last_pressed = millis();
         }
-        if(digitalRead(g4) == HIGH && g4_prev == LOW && millis() - g4_last_pressed >= 30) {
+        if(digitalRead(g4) == LOW && g4_prev == HIGH && millis() - g4_last_pressed >= 30) {
             leto--;
-            g4_prev = HIGH;
+            if(leto < 0)
+                leto = 0;
+            g4_prev = LOW;
             g4_last_pressed = millis();
         }
-        g1_prev = HIGH;
+        g1_prev = LOW;
         g3_prev = digitalRead(g3);
         g4_prev = digitalRead(g4);
 
@@ -446,7 +486,7 @@ void edit_leto() {
     // save changes
     RTC->setDS1302Time(RTC->seconds, RTC->minutes, RTC->hours, RTC->dayofweek, RTC->dayofmonth, RTC->month, leto);
     start_t = end_t = millis();
-    g1_prev = LOW;
+    g1_prev = HIGH;
 
 }
 
