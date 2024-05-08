@@ -16,7 +16,10 @@
 #include <DHT.h>
 #include <EEPROM.h>
 
-const int digitPins[4] = {B11101111,B11010000,B10111111,B01111111};
+
+//! ista frka, zakomentirana tabela je originalna
+//const int digitPins[4] = {B11101111,B11010000,B10111111,B01111111};
+const int digitPins[4] = {B01111111, B10111111, B11010000, B11101111};
 
 const int clockPin = 11;    //74HC595 Pin 11
 const int latchPin = 12;    //74HC595 Pin 12
@@ -447,6 +450,33 @@ void edit_leto() {
 
 }
 
+//! MOJA
+// skuhu funkcijo da dela za moj cip. ce kopiras uporab uno zgori
+//writes the temperature on display
+void updateDisp(bool dp){
+    for(byte j=0; j<4; j++)  
+        digitalWrite(digitPins[j], HIGH);
+ 
+    digitalWrite(latchPin, LOW);  
+    shiftOut(dataPin, clockPin, MSBFIRST, B11111111);
+    shiftOut(dataPin, clockPin, MSBFIRST, B11111111);
+    digitalWrite(latchPin, HIGH);
+ 
+    delayMicroseconds(100);
+
+    digitalWrite(latchPin, LOW);
+    if(digitScan==1 && dp)
+        shiftOut(dataPin, clockPin, MSBFIRST, digit[digitBuffer[digitScan]] | B00000001);
+    else
+        shiftOut(dataPin, clockPin, MSBFIRST, digit[digitBuffer[digitScan]]);
+ 
+    shiftOut(dataPin, clockPin, MSBFIRST, digitPins[digitScan]);
+    digitalWrite(latchPin, HIGH);
+    digitScan++;
+    if(digitScan>3) digitScan=0; 
+}
+
+//! TVOJA
 // DEFAULT FUNKCIJA
 /* //writes the temperature on display
 void updateDisp(bool dp){ // ----------------------
@@ -471,29 +501,3 @@ void updateDisp(bool dp){ // ----------------------
     digitScan++;
     if(digitScan>3) digitScan=0;
 } */
-
-// skuhu funkcijo da dela za moj cip. ce kopiras uporab uno zgori
-//writes the temperature on display
-void updateDisp(bool dp){
-  for(byte j=0; j<4; j++)  
-    digitalWrite(digitPins[j], HIGH);
- 
-  digitalWrite(latchPin, LOW);  
-  shiftOut(dataPin, clockPin, MSBFIRST, B11111111);
-  shiftOut(dataPin, clockPin, MSBFIRST, B11111111);
-  digitalWrite(latchPin, HIGH);
- 
-  delayMicroseconds(100);
-
-  digitalWrite(latchPin, LOW);    
-    shiftOut(dataPin, clockPin, MSBFIRST, digit[digitBuffer[digitScan]]);
-    if(digitScan==1){
-      //shiftOut(dataPin, clockPin, MSBFIRST, (digit[digitBuffer[digitScan]]|B00000001));
-          shiftOut(dataPin, clockPin, MSBFIRST, digitPins[digitScan] | B00000001);
-    }
-    else
-    shiftOut(dataPin, clockPin, MSBFIRST, digitPins[digitScan]);
-  digitalWrite(latchPin, HIGH);
-  digitScan++;
-  if(digitScan>3) digitScan=0; 
-}
