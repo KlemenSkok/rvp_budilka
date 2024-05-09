@@ -76,6 +76,8 @@ DHT dht(dht_pin, DHT11);
 
 void updateDisp(bool);
 
+void dump_eeprom();
+
 void setup(){
     for(int i = 0; i < 4; i++) {
         pinMode(digitPins[i],OUTPUT);
@@ -88,7 +90,7 @@ void setup(){
     pinMode(g2, INPUT_PULLUP);
     pinMode(g3, INPUT_PULLUP);
     pinMode(g4, INPUT_PULLUP);
-    pinMode(gb, INPUT_PULLUP); // DAS NA INTERRUPT (pin 2)
+    pinMode(gb, INPUT_PULLUP);
 
     pinMode(budilka_led, OUTPUT); // led indikator budilke
 
@@ -96,6 +98,10 @@ void setup(){
     // seconds, minutes, hours, day of the week, day of the month, month, year
     //RTC.setDS1302Time(00, 41, 11, 1, 26, 2, 2024);
     dht.begin();
+
+    Serial.begin(9600);
+
+    //dump_eeprom();
 
 }
 
@@ -238,7 +244,8 @@ void check_gb() {
         if(gb_prev == HIGH) {
             gb_last_pressed = millis();
         }
-        else if(gb_prev == LOW && millis() - gb_last_pressed >= 1500) { // ce drzis tipko za vec kot 1,5s, jo nastavis
+        else if(gb_prev == LOW && millis() - gb_last_pressed >= 3000) { // ce drzis tipko za vec kot 3s, jo nastavis
+            Serial.println("nastavljam budilko");
             nastavi_budilko();
         }
     }
@@ -246,6 +253,7 @@ void check_gb() {
         if(gb_prev == LOW && millis() - gb_last_pressed >= 30) { // toggle budilka
             vklopi_budilko = !vklopi_budilko;
             digitalWrite(budilka_led, vklopi_budilko);
+            Serial.println("togglam budilko");
         }
     }
     gb_prev = gb_curr;
@@ -260,16 +268,40 @@ void nastavi_budilko() {
     struct CasBudilke cajt;
     EEPROM.get(0, cajt);
 
+    Serial.print("Berem iz eeproma: ");
+    Serial.print(cajt.ura);
+    Serial.print(":");
+    Serial.println(cajt.minuta);
+
+    if(cajt.ura == 255 && cajt.minuta == 255) {
+        cajt.ura = RTC->hours;
+        cajt.minuta = RTC->minutes;
+    }
+
+    auto show_changes = [&]() {
+        digitBuffer[0] = cajt.ura / 10;
+        digitBuffer[1] = cajt.ura % 10;
+        digitBuffer[2] = cajt.minuta / 10;
+        digitBuffer[3] = cajt.minuta % 10;
+        updateDisp(true);
+    };
+
 
     while(digitalRead(gb) == HIGH) {
         while(digitalRead(g1) == LOW) { // edit ure
             if(digitalRead(g3) == LOW && g3_prev == HIGH && millis() - g3_last_pressed >= 30) {
                 cajt.ura++;
+                if(cajt.ura >= 24)
+                    cajt.ura = 0;
+
                 g3_prev = LOW;
                 g3_last_pressed = millis();
             }
             if(digitalRead(g4) == LOW && g4_prev == HIGH && millis() - g4_last_pressed >= 30) {
                 cajt.ura--;
+                if(cajt.ura < 0)
+                    cajt.ura = 23;
+
                 g4_prev = LOW;
                 g4_last_pressed = millis();
             }
@@ -277,22 +309,24 @@ void nastavi_budilko() {
             g3_prev = digitalRead(g3);
             g4_prev = digitalRead(g4);
 
-            digitBuffer[0] = cajt.ura / 10;
-            digitBuffer[1] = cajt.ura % 10;
-            digitBuffer[2] = cajt.minuta / 10;
-            digitBuffer[3] = cajt.minuta % 10;
-            updateDisp(true);
+            show_changes();
         }
         g1_prev = LOW;
 
         while(digitalRead(g2) == LOW) { // edit minute
             if(digitalRead(g3) == LOW && g3_prev == HIGH && millis() - g3_last_pressed >= 30) {
                 cajt.minuta++;
+                if(cajt.minuta > 59)
+                    cajt.minuta = 0;
+
                 g3_prev = LOW;
                 g3_last_pressed = millis();
             }
             if(digitalRead(g4) == LOW && g4_prev == HIGH && millis() - g4_last_pressed >= 30) {
                 cajt.minuta--;
+                if(cajt.minuta < 0)
+                    cajt.minuta = 59;
+
                 g4_prev = LOW;
                 g4_last_pressed = millis();
             }
@@ -300,19 +334,25 @@ void nastavi_budilko() {
             g3_prev = digitalRead(g3);
             g4_prev = digitalRead(g4);
 
-            digitBuffer[0] = cajt.ura / 10;
-            digitBuffer[1] = cajt.ura % 10;
-            digitBuffer[2] = cajt.minuta / 10;
-            digitBuffer[3] = cajt.minuta % 10;
-            updateDisp(true);
+            show_changes();
         }
         g2_prev = LOW;
+
+        show_changes();
 
     }
 
     gb_prev = LOW;
+    gb_last_pressed = millis();
     // zapisi novi cas v eeprom
     EEPROM.put(0, cajt);
+
+    Serial.print("Zapisujem v eeprom: ");
+    Serial.print(cajt.ura);
+    Serial.print(":");
+    Serial.println(cajt.minuta);
+
+    delay(50);
 
 }
 
@@ -456,6 +496,21 @@ void edit_mesec() {
     g2_prev = HIGH;
 
 }
+
+void dump_eeprom() {
+    byte data;
+    for(int i = 0; i < 1024; i++) {
+        data = EEPROM.read(i);
+        Serial.print(data, HEX);
+        if(i % 16 == 15)
+            Serial.println();
+        else if(i % 8 == 7)
+            Serial.print("  ");
+        else
+            Serial.print(" ");
+    }
+}
+
 
 void edit_leto() {
 
