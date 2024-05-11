@@ -1,7 +1,7 @@
 
 /**
- * @file main.cpp
- * @brief program za budilko pr rvp
+ * \file main.cpp
+ * \brief program za budilko pr rvp
  * 
  * uporabla funkcijo updateDisp() za mojo ploscico
  * ! ČE KOPIRAS KODO ZAKOMENTIRI MOJO FUNKCIJO IN UPORAB UNO OD KRISLJA
@@ -240,23 +240,24 @@ void loop() {
 void check_gb() {
 
     bool gb_curr = digitalRead(gb);
-    if(gb_curr == LOW) {
-        if(gb_prev == HIGH) {
+
+    if(gb_curr == HIGH) { // take action on button release
+        if(gb_prev == LOW) {
+            if(millis() - gb_last_pressed >= 3000) {
+                Serial.println("nastavljam budilko");
+                nastavi_budilko();
+            }
+            else if(millis() - gb_last_pressed >= 50) {
+                vklopi_budilko = !vklopi_budilko;
+                digitalWrite(budilka_led, vklopi_budilko);
+                Serial.println("togglam budilko");
+            }
             gb_last_pressed = millis();
         }
-        else if(gb_prev == LOW && millis() - gb_last_pressed >= 3000) { // ce drzis tipko za vec kot 3s, jo nastavis
-            Serial.println("nastavljam budilko");
-            nastavi_budilko();
-        }
     }
-    else {
-        if(gb_prev == LOW && millis() - gb_last_pressed >= 30) { // toggle budilka
-            vklopi_budilko = !vklopi_budilko;
-            digitalWrite(budilka_led, vklopi_budilko);
-            Serial.println("togglam budilko");
-        }
-    }
+
     gb_prev = gb_curr;
+
 }
 
 void nastavi_budilko() {
