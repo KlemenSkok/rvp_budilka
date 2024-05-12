@@ -24,8 +24,6 @@
  * 13 - dataPin
  * A0 - led za budilko
  * 
- * 
- * 
 */
 
 
@@ -343,8 +341,6 @@ void nastavi_budilko() {
 
     }
 
-    gb_prev = LOW;
-    gb_last_pressed = millis();
     // zapisi novi cas v eeprom
     EEPROM.put(0, cajt);
 
@@ -352,6 +348,12 @@ void nastavi_budilko() {
     Serial.print(cajt.ura);
     Serial.print(":");
     Serial.println(cajt.minuta);
+
+    while(digitalRead(gb) == LOW); // pocak da clouk spusti gumb
+
+    gb_prev = HIGH;
+    gb_last_pressed = millis();
+    
 
     delay(50);
 
