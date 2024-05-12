@@ -2,9 +2,7 @@
 /**
  * \file main.cpp
  * \brief program za budilko pr rvp
- * 
- * uporabla funkcijo updateDisp() za mojo ploscico
- * ! ČE KOPIRAS KODO ZAKOMENTIRI MOJO FUNKCIJO IN UPORAB UNO OD KRISLJA
+ * \author Klemen Skok
  * 
  * Ta koda je na githubu: https://github.com/KlemenSkok/rvp_budilka.git
  *
@@ -34,8 +32,6 @@
 #include <EEPROM.h>
 
 
-//! isti shit, zakomentirana tabela je originalna
-//const int digitPins[4] = {B11101111,B11010000,B10111111,B01111111};
 const int digitPins[4] = {B01111111, B10111111, B11010000, B11101111};
 
 const int clockPin = 11;    //74HC595 Pin 11
@@ -548,8 +544,6 @@ void edit_leto() {
 
 }
 
-//! MOJA
-// skuhu funkcijo da dela za moj cip. ce kopiras uporab uno zgori
 //writes the temperature on display
 void updateDisp(bool dp){
     for(byte j=0; j<4; j++)  
@@ -573,29 +567,3 @@ void updateDisp(bool dp){
     digitScan++;
     if(digitScan>3) digitScan=0; 
 }
-
-//! TVOJA
-// DEFAULT FUNKCIJA
-/* //writes the temperature on display
-void updateDisp(bool dp){ // ----------------------
-    for(byte j=0; j<4; j++)  
-        digitalWrite(digitPins[j], HIGH);
- 
-    digitalWrite(latchPin, LOW);  
-    shiftOut(dataPin, clockPin, MSBFIRST, B11111111);
-    shiftOut(dataPin, clockPin, MSBFIRST, B11111111);
-    digitalWrite(latchPin, HIGH);
- 
-    delayMicroseconds(100);
-
-    digitalWrite(latchPin, LOW);    
-    shiftOut(dataPin, clockPin, MSBFIRST, digitPins[digitScan]);
-    if(digitScan==1 && dp){ // ----------------------
-        shiftOut(dataPin, clockPin, MSBFIRST, (digit[digitBuffer[digitScan]]|B00000001));
-    }
-    else
-        shiftOut(dataPin, clockPin, MSBFIRST, digit[digitBuffer[digitScan]]);
-    digitalWrite(latchPin, HIGH);
-    digitScan++;
-    if(digitScan>3) digitScan=0;
-} */
